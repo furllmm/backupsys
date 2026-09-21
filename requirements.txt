@@ -1,0 +1,24 @@
+# Core engine has zero required third-party dependencies (stdlib only;
+# this includes the packed storage engine's SQLite index -- sqlite3 is
+# part of the Python standard library). The packages below are optional
+# but recommended:
+
+PySide6>=6.6        # required only for the GUI (gui/main.py, run_gui.py)
+zstandard>=0.22      # optional: enables per-chunk zstd compression (local store + destinations)
+xxhash>=3.4          # optional: enables --fast-hash stronger change detection
+cryptography>=42.0   # required only for encrypted destinations (destinations/crypto.py)
+paramiko>=3.4        # required only for SFTP destinations
+requests>=2.31        # required only for WebDAV destinations (Nextcloud/ownCloud/Seafile/etc.)
+boto3>=1.34           # required only for S3-compatible destinations (AWS S3, MinIO, etc.)
+pybtrfs>=0.6.4        # optional: instant (CoW) btrfs subvolume snapshots on Linux (os_backup/snapshot.py)
+
+# Timeshift itself has no Python package (it is a shell/GTK tool wrapping
+# rsync+hardlinks or the btrfs CLI); pybtrfs gives backupsys the same
+# "instant snapshot" capability directly from Python. The btrfs command-line
+# tool (btrfs-progs) is used as a fallback when pybtrfs is not installed,
+# and is required for snapshot replication (os_backup/btrfs_stream.py and
+# os_backup/btrfs_replicator.py use `btrfs send` / `btrfs receive`): apt-get
+# install btrfs-progs
+
+# Android backup requires the external 'adb' binary (Android Platform
+# Tools), which is not a Python package: https://developer.android.com/tools/adb

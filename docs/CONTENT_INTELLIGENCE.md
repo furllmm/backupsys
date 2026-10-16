@@ -47,6 +47,20 @@ Only explicitly supplied files are inspected. JSON includes per-file profiles,
 aggregate counts, elapsed time, and sampled-byte totals. CSV is intended for
 spreadsheet analysis. Sampling may miss patterns outside the sample.
 
+## Reproducible mixed-content corpus
+
+Generate a deterministic synthetic corpus with JSON, CSV, logs, source code,
+highly repetitive text, an exact duplicate, random binary data, and zlib-compressed
+binary data. The generator refuses to overwrite a non-empty target directory.
+
+    python -m tools.content_corpus ./tmp/content-corpus
+    python -m tools.content_report --format json ./tmp/content-corpus/*
+    python -m tools.content_compression_probe ./tmp/content-corpus/*
+
+The corpus is synthetic; its proportions are useful for repeatable experiments,
+not a claim that it represents every user's files. Keep the corpus directory
+separate from real backup sources and remove it when finished.
+
 ## Compression + dedupe payload probe
 
     python -m tools.content_compression_probe file1 file2

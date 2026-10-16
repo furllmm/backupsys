@@ -33,9 +33,17 @@ def generate_corpus(target: str | Path, seed: int = 2026) -> list[Path]:
     records = [
         {"id": i, "group": i % 12, "active": i % 7 != 0,
          "label": f"item-{i % 40}", "value": (i * 7919) % 100003}
-        for i in range(2500)
+        for i in range(120)
     ]
     json_data = (json.dumps({"schema": 1, "records": records}, separators=(",", ":")) + "\n").encode("utf-8")
+    jsonl_data = "".join(
+        json.dumps(
+            {"id": i, "group": i % 12, "active": i % 7 != 0,
+             "label": f"item-{i % 40}", "value": (i * 7919) % 100003},
+            separators=(",", ":"),
+        ) + "\\n"
+        for i in range(2500)
+    ).encode("utf-8")
     source_data = (
         '"""Synthetic repetitive source-code fixture for compression tests."""\n'
         + "".join(
@@ -54,7 +62,7 @@ def generate_corpus(target: str | Path, seed: int = 2026) -> list[Path]:
     payloads = {
         "events.log": log_data,
         "records.csv": csv_data,
-        "records.json": json_data,
+        "records.json": json_data,\n        "records.jsonl": jsonl_data,
         "source_fixture.py": source_data,
         "repeated.txt": repeated_data,
         "repeated-copy.txt": repeated_data,

@@ -41,7 +41,7 @@ def generate_corpus(target: str | Path, seed: int = 2026) -> list[Path]:
             {"id": i, "group": i % 12, "active": i % 7 != 0,
              "label": f"item-{i % 40}", "value": (i * 7919) % 100003},
             separators=(",", ":"),
-        ) + "\\n"
+        ) + "\n"
         for i in range(2500)
     ).encode("utf-8")
     source_data = (

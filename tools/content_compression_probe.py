@@ -75,8 +75,9 @@ def probe_files(
         if size == 0:
             # BackupSys represents an empty file without storing a content chunk.
             pass
-        elif size <= whole_file_threshold:
-            # Mirrors the current whole-file storage decision.
+        elif size < whole_file_threshold:
+            # Mirrors SnapshotBuilder._should_store_whole: the threshold itself
+            # enters the chunked path (the comparison is intentionally strict).
             with path.open("rb") as stream:
                 data = stream.read()
             is_new = add_object(data, path)

@@ -22,6 +22,7 @@ backup/restore would experience.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import platform
 import random
@@ -184,6 +185,48 @@ def generate_synthetic_dataset(
     return file_count
 
 
+
+def _sha256_file(path: Path) -> str:
+    """Hash a file with bounded memory for benchmark integrity checks."""
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def verify_restored_dataset(source_root: Path, restored_root: Path) -> None:
+    """Raise if a benchmark restore differs from the generated source tree."""
+    source_files = {
+        path.relative_to(source_root).as_posix(): path
+        for path in source_root.rglob("*")
+        if path.is_file()
+    }
+    restored_files = {
+        path.relative_to(restored_root).as_posix(): path
+        for path in restored_root.rglob("*")
+        if path.is_file()
+    }
+
+    missing = sorted(source_files.keys() - restored_files.keys())
+    unexpected = sorted(restored_files.keys() - source_files.keys())
+    mismatched = []
+    for relative_path in sorted(source_files.keys() & restored_files.keys()):
+        source = source_files[relative_path]
+        restored = restored_files[relative_path]
+        if source.stat().st_size != restored.stat().st_size:
+            mismatched.append(relative_path)
+        elif _sha256_file(source) != _sha256_file(restored):
+            mismatched.append(relative_path)
+
+    if missing or unexpected or mismatched:
+        raise RuntimeError(
+            "Benchmark restore integrity check failed: "
+            f"missing={missing[:5]}, unexpected={unexpected[:5]}, "
+            f"content_mismatches={mismatched[:5]}"
+        )
+
+
 def run_benchmark(
     dataset_size_mb: float = 200.0,
     chunk_size_mb: float = 4.0,
@@ -232,6 +275,7 @@ def run_benchmark(
 
         if result.failed:
             raise RuntimeError(f"Benchmark restore had failures: {result.failed[:5]}")
+        verify_restored_dataset(src_dir, restore_dir)
 
         if hasattr(store, "chunk_count"):
             chunk_count = store.chunk_count()

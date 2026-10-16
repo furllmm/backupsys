@@ -60,7 +60,9 @@ writing files or a backup repository.
 
 **This is an estimate, not a replacement for the real benchmark.** It excludes
 store metadata, indexes, allocation overhead, existing repository contents,
-and parallel pipeline effects. Validate any conclusion against the real
+and parallel pipeline effects. The end-to-end benchmark also honours its
+compression on/off setting and checks restored paths, sizes, and SHA-256 content.
+Validate any conclusion against the real
 `core.benchmark` backup/restore cycle, which now verifies restored file paths,
 sizes, and SHA-256 content against the generated source dataset before
 reporting benchmark metrics.

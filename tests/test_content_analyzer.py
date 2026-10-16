@@ -13,7 +13,7 @@ class ContentAnalyzerTests(unittest.TestCase):
         self.assertEqual(profile.recommendation, "avoid-expensive-pattern-analysis")
 
     def test_json_content(self):
-        profile = analyze_bytes((b'{"items":[1,2,3],"name":"demo"}\n' * 80))
+        profile = analyze_bytes(b'{"items":[1,2,3],"name":"' + b"x" * 1100 + b'"}')
         self.assertEqual(profile.kind, "text")
         self.assertEqual(profile.format_hint, "json")
         self.assertEqual(profile.recommendation, "text-pattern-analysis-candidate")

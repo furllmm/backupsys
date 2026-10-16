@@ -45,6 +45,21 @@ class CompressionProbeTests(unittest.TestCase):
             self.assertEqual(summary["deduplicated_object_references"], 3)
             self.assertEqual(report["files"][0]["storage_mode_estimate"], "chunked")
 
+    def test_file_equal_to_threshold_uses_chunked_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "threshold.bin"
+            path.write_bytes(b"ABCD")
+
+            report = probe_files(
+                [path],
+                chunk_size=2,
+                whole_file_threshold=4,
+            )
+
+            self.assertEqual(report["files"][0]["storage_mode_estimate"], "chunked")
+            self.assertEqual(report["files"][0]["objects"], 2)
+            self.assertEqual(report["summary"]["objects_seen"], 2)
+
     def test_empty_files_do_not_create_stored_objects(self):
         with tempfile.TemporaryDirectory() as directory:
             empty = Path(directory) / "empty"

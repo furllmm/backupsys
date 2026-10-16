@@ -70,7 +70,14 @@ cli.py                   command-line interface
   Every completed file is durably logged, so an interrupted restore resumes
   from the last completed file instead of restarting from zero.
 
-### Content intelligence (phase 1, experimental)\n\nBackupSys includes a read-only, bounded-sample content profiler that identifies\ncommon file signatures and text-like content without trusting file extensions.\nIt emits heuristic recommendations only; it does not transform stored bytes or\nchange snapshot/restore behavior yet. See [docs/CONTENT_INTELLIGENCE.md](docs/CONTENT_INTELLIGENCE.md).\n\n### Duplicate-source protection (optional)
+### Content intelligence (phase 1, experimental)
+
+BackupSys includes a read-only, bounded-sample content profiler that identifies
+common file signatures and text-like content without trusting file extensions.
+It emits heuristic recommendations only; it does not transform stored bytes or
+change snapshot/restore behavior yet. See [docs/CONTENT_INTELLIGENCE.md](docs/CONTENT_INTELLIGENCE.md).
+
+### Duplicate-source protection (optional)
 
 Off by default. Enable with:
 

@@ -236,6 +236,23 @@ reads, prefetch, streaming whole-file objects), smart chunking end-to-end
 parallel vs. sequential hash/compress producing identical results), and
 the benchmark tool.
 
+## Experimental Content Intelligence
+
+The `feature/content-intelligence-v1` branch includes a read-only content
+profiler and two explicit-path reporting tools. They are experimental and do
+not change snapshot creation, stored bytes, or restore behavior.
+
+```bash
+python -m tools.content_report --format json file1 file2
+python -m tools.content_report --format csv file1 file2
+python -m tools.content_compression_probe file1 file2
+```
+
+The compression probe requires the Python `zstandard` package and estimates
+compressed payload size after SHA-256 object deduplication. It excludes store
+metadata and must be checked against the real backup/restore benchmark. Details:
+[`docs/CONTENT_INTELLIGENCE.md`](docs/CONTENT_INTELLIGENCE.md).
+
 ## Btrfs instant snapshots & replication
 
 Timeshift has no Python package (it is a shell/GTK tool wrapping rsync or

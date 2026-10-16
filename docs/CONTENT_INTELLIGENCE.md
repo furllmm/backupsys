@@ -61,7 +61,9 @@ writing files or a backup repository.
 **This is an estimate, not a replacement for the real benchmark.** It excludes
 store metadata, indexes, allocation overhead, existing repository contents,
 and parallel pipeline effects. Validate any conclusion against the real
-`core.benchmark` backup/restore cycle.
+`core.benchmark` backup/restore cycle, which now verifies restored file paths,
+sizes, and SHA-256 content against the generated source dataset before
+reporting benchmark metrics.
 
 ## Next evidence-driven phases
 

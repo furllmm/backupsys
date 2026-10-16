@@ -31,6 +31,11 @@ def probe_files(
     if not -7 <= compression_level <= 22:
         raise ValueError("compression_level must be between -7 and 22")
 
+    files = [Path(p) for p in paths]
+    for path in files:
+        if not path.is_file():
+            raise ValueError(f"not a regular file: {path}")
+
     try:
         import zstandard
     except ImportError as exc:
@@ -39,11 +44,6 @@ def probe_files(
             "existing zstandard dependency to run this probe."
         ) from exc
 
-    files = [Path(p) for p in paths]
-    for path in files:
-        if not path.is_file():
-            raise ValueError(f"not a regular file: {path}")
-
     compressor = zstandard.ZstdCompressor(level=compression_level)
     started = time.perf_counter()
     unique: dict[str, dict] = {}
@@ -51,13 +51,13 @@ def probe_files(
     file_rows = []
     total_objects_seen = 0
 
-    def add_object(data: bytes, path: Path) -> tuple[str, bool]:
+    def add_object(data: bytes, path: Path) -> bool:
         nonlocal total_objects_seen
         digest = hashlib.sha256(data).hexdigest()
         total_objects_seen += 1
         if digest in unique:
             unique[digest]["references"] += 1
-            return digest, False
+            return False
         encoded_size = len(compressor.compress(data))
         unique[digest] = {
             "raw_bytes": len(data),
@@ -65,18 +65,21 @@ def probe_files(
             "references": 1,
             "first_seen_path": str(path),
         }
-        return digest, True
+        return True
 
     for path in files:
         size = path.stat().st_size
         logical_bytes += size
         object_count = 0
         duplicates = 0
-        if size <= whole_file_threshold:
+        if size == 0:
+            # BackupSys represents an empty file without storing a content chunk.
+            pass
+        elif size <= whole_file_threshold:
             # Mirrors the current whole-file storage decision.
             with path.open("rb") as stream:
                 data = stream.read()
-            _, is_new = add_object(data, path)
+            is_new = add_object(data, path)
             object_count = 1
             duplicates = 0 if is_new else 1
         else:
@@ -86,14 +89,14 @@ def probe_files(
                     data = stream.read(chunk_size)
                     if not data:
                         break
-                    _, is_new = add_object(data, path)
+                    is_new = add_object(data, path)
                     object_count += 1
                     if not is_new:
                         duplicates += 1
         file_rows.append({
             "path": str(path),
             "file_bytes": size,
-            "storage_mode_estimate": "whole-file" if size <= whole_file_threshold else "chunked",
+            "storage_mode_estimate": "empty" if size == 0 else ("whole-file" if size <= whole_file_threshold else "chunked"),
             "objects": object_count,
             "duplicate_objects_within_or_across_inputs": duplicates,
         })

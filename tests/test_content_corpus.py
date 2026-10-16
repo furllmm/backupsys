@@ -12,7 +12,8 @@ class ContentCorpusTests(unittest.TestCase):
             paths = generate_corpus(root, seed=123)
 
             self.assertEqual(len(paths), 9)
-            self.assertTrue((root / "records.json").is_file())\n            self.assertTrue((root / "records.jsonl").is_file())
+            self.assertTrue((root / "records.json").is_file())
+            self.assertTrue((root / "records.jsonl").is_file())
             self.assertTrue((root / "events.log").is_file())
             self.assertTrue((root / "random.bin").is_file())
             self.assertEqual(

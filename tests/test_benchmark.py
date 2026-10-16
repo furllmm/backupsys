@@ -66,6 +66,10 @@ class TestBenchmark(unittest.TestCase):
         self.assertEqual(report.engine, "classic")
         self.assertGreater(report.chunk_count, 0)
 
+    def test_compression_flag_is_reflected_in_actual_benchmark(self):
+        report = run_benchmark(dataset_size_mb=1, engine="packed", compression=False)
+        self.assertFalse(report.compression_enabled)
+
     def test_report_text_contains_key_metrics(self):
         report = run_benchmark(dataset_size_mb=5, engine="packed")
         text = report.to_text()

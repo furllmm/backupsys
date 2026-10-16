@@ -1,41 +1,74 @@
-# BackupSys Content Intelligence Layer — Phase 1
+# BackupSys Content Intelligence Layer — Experimental
 
-## Status
+## Status and safety boundary
 
-Phase 1 is a read-only profiler, not a new compression format. It samples
-content and returns evidence for later policy decisions. It never rewrites a
-source file and is not yet wired into snapshot creation.
+This branch adds a read-only, bounded content profiler, a conservative analysis
+policy, a JSON/CSV report command, and an isolated Zstandard + dedupe payload
+probe. These experiments gather evidence; they are not a new compression
+format and are not wired into snapshot creation, chunk storage, or restore.
+
+No component in this layer rewrites source files or stored chunks. Existing
+chunk hashes, storage layout, snapshots, and restore behavior remain untouched.
 
 ## Principles
 
 - Do not trust filename extensions as the source of truth.
 - Recognize strong file signatures where possible; signatures are hints, not
   full validation of the file.
-- Read only a bounded sample (64 KiB by default).
+- Read only a bounded sample (64 KiB by default) during profiling.
 - Distinguish common already-compressed formats from text-like content.
 - Treat recommendations as heuristics, not promises of storage savings.
-- Preserve existing chunk hashes, storage layout, snapshots, and restore
-  behavior until a reversible transform format and round-trip tests exist.
+- Measure against the existing backup + compression + dedupe pipeline before
+  considering any transform.
 
-## API
+## Profiler and policy APIs
 
     from core.content_analyzer import analyze_file
     profile = analyze_file("/path/to/file.with-any-extension")
     print(profile.format_hint, profile.recommendation, profile.reasons)
 
-Recommendations:
+    from core.content_policy import decide_analysis
+    decision = decide_analysis("/path/to/file")
+    print(decision.analysis_level, decision.reason)
 
-- text-pattern-analysis-candidate: candidate for a future measured text/pattern transform.
-- avoid-expensive-pattern-analysis: commonly compressed format or high entropy
-  suggests generic pattern analysis may cost CPU without useful gains.
-- standard-chunking: retain the current storage path.
-- no-content: empty file.
+Analysis levels are `skip` for empty files, `shallow` when deep generic analysis
+is unlikely to pay off, `candidate` for sampled text that may merit specific
+experiments, and `standard` when no deeper pass is justified. These are
+routing hints only.
 
-## Next phases
+## Read-only reports
 
-1. Benchmark profiler cost and accuracy on representative real-world files.
-2. Add opt-in analysis metrics to backup reports without changing stored bytes.
-3. Add format adapters behind a stable interface, starting with text/log/JSON
-   and a binary structured format selected by benchmarks.
-4. Add reversible transforms only when they beat the existing Zstandard plus
-   dedupe baseline and restore compatibility is proven.
+From the repository root:
+
+    python -m tools.content_report --format json file1 file2
+    python -m tools.content_report --format csv --sample-size 32768 file1 file2
+
+Only explicitly supplied files are inspected. JSON includes per-file profiles,
+aggregate counts, elapsed time, and sampled-byte totals. CSV is intended for
+spreadsheet analysis. Sampling may miss patterns outside the sample.
+
+## Compression + dedupe payload probe
+
+    python -m tools.content_compression_probe file1 file2
+    python -m tools.content_compression_probe --chunk-size 4194304 --whole-file-threshold 67108864 file1 file2
+
+This optional probe requires the existing Python `zstandard` package. It uses
+SHA-256 on raw objects, compresses each unique object once, and follows the
+current whole-file threshold/chunk-size decision for supplied files. It reports
+estimated unique compressed payload bytes and deduplication counts without
+writing files or a backup repository.
+
+**This is an estimate, not a replacement for the real benchmark.** It excludes
+store metadata, indexes, allocation overhead, existing repository contents,
+and parallel pipeline effects. Validate any conclusion against the real
+`core.benchmark` backup/restore cycle.
+
+## Next evidence-driven phases
+
+1. Run unit tests and fix any environment or compatibility issues.
+2. Profile representative datasets and verify classification quality/cost.
+3. Compare payload estimates with actual end-to-end backup storage, CPU, RAM,
+   backup time, and restore time.
+4. Prototype reversible, versioned transforms only if measured results justify
+   them; require exact round-trip tests and backward-compatible restore before
+   integrating into the backup path.

@@ -250,9 +250,10 @@ profiler and two explicit-path reporting tools. They are experimental and do
 not change snapshot creation, stored bytes, or restore behavior.
 
 ```bash
-python -m tools.content_report --format json file1 file2
-python -m tools.content_report --format csv file1 file2
-python -m tools.content_compression_probe file1 file2
+python -m tools.content_corpus ./tmp/content-corpus
+python -m tools.content_report --format json ./tmp/content-corpus/*
+python -m tools.content_report --format csv ./tmp/content-corpus/*
+python -m tools.content_compression_probe ./tmp/content-corpus/*
 ```
 
 The compression probe requires the Python `zstandard` package and estimates

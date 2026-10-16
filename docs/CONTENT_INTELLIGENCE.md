@@ -49,7 +49,7 @@ spreadsheet analysis. Sampling may miss patterns outside the sample.
 
 ## Reproducible mixed-content corpus
 
-Generate a deterministic synthetic corpus with JSON, CSV, logs, source code,
+Generate a deterministic synthetic corpus with JSON, JSONL, CSV, logs, source code,
 highly repetitive text, an exact duplicate, random binary data, and zlib-compressed
 binary data. The generator refuses to overwrite a non-empty target directory.
 

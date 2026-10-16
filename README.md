@@ -19,7 +19,7 @@ storage, snapshot, or restore code.
 ```
 core/
   pathresolver.py   portable logical paths (%APPDATA%, $HOME, ...)
-  chunker.py         fixed-size chunking + SHA-256 (simple/legacy path)
+  content_analyzer.py read-only content profiling; signature/text/entropy hints (phase 1)\n  chunker.py         fixed-size chunking + SHA-256 (simple/legacy path)
   storage.py          classic per-file chunk store (storage/ab/cd/<hash>) -- kept for compatibility
   packed_store.py    high-performance engine: chunks.dat + SQLite index, LRU cache, sequential I/O
   store_factory.py   opens the right engine for a store root (fixed per-root via engine.json)
@@ -70,7 +70,7 @@ cli.py                   command-line interface
   Every completed file is durably logged, so an interrupted restore resumes
   from the last completed file instead of restarting from zero.
 
-### Duplicate-source protection (optional)
+### Content intelligence (phase 1, experimental)\n\nBackupSys includes a read-only, bounded-sample content profiler that identifies\ncommon file signatures and text-like content without trusting file extensions.\nIt emits heuristic recommendations only; it does not transform stored bytes or\nchange snapshot/restore behavior yet. See [docs/CONTENT_INTELLIGENCE.md](docs/CONTENT_INTELLIGENCE.md).\n\n### Duplicate-source protection (optional)
 
 Off by default. Enable with:
 

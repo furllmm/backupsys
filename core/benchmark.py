@@ -251,6 +251,11 @@ def run_benchmark(
         actual_size = sum(f.stat().st_size for f in src_dir.rglob("*") if f.is_file())
 
         store = open_store(store_root, engine=engine)
+        # Honour the benchmark switch for both storage engines. Keep the
+        # store's capability check (e.g. missing zstandard) authoritative.
+        if hasattr(store, "use_compression"):
+            store.use_compression = bool(compression and store.use_compression)
+        compression_enabled = bool(getattr(store, "use_compression", False))
         manager = PlanManager(store)
         plan = manager.create("Benchmark", sources=[str(src_dir)])
 
@@ -299,7 +304,7 @@ def run_benchmark(
             dataset_file_count=file_count,
             chunk_size_mb=chunk_size_mb,
             whole_file_threshold_mb=whole_file_threshold_mb,
-            compression_enabled=compression,
+            compression_enabled=compression_enabled,
             backup_seconds=backup_elapsed,
             backup_speed_mbps=backup_mbps,
             backup_cpu=backup_cpu,

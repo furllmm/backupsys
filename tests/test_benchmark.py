@@ -6,15 +6,41 @@ tests.test_benchmark
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.benchmark import run_benchmark
+from core.benchmark import run_benchmark, verify_restored_dataset
 
 
 class TestBenchmark(unittest.TestCase):
+    def test_restore_integrity_verifier_accepts_identical_tree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            restored = root / "restored"
+            (source / "nested").mkdir(parents=True)
+            (restored / "nested").mkdir(parents=True)
+            (source / "nested" / "data.bin").write_bytes(b"same content")
+            (restored / "nested" / "data.bin").write_bytes(b"same content")
+
+            verify_restored_dataset(source, restored)
+
+    def test_restore_integrity_verifier_rejects_changed_content(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            restored = root / "restored"
+            source.mkdir()
+            restored.mkdir()
+            (source / "data.bin").write_bytes(b"original")
+            (restored / "data.bin").write_bytes(b"modified")
+
+            with self.assertRaisesRegex(RuntimeError, "integrity check failed"):
+                verify_restored_dataset(source, restored)
+
     def test_packed_engine_benchmark_produces_sane_report(self):
         report = run_benchmark(dataset_size_mb=10, engine="packed")
 

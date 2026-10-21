@@ -3,8 +3,8 @@
 ## Status and safety boundary
 
 This branch adds a read-only, bounded content profiler, a conservative analysis
-policy, a JSON/CSV report command, and an isolated Zstandard + dedupe payload
-probe. These experiments gather evidence; they are not a new compression
+policy, a JSON/CSV report command, a combined experiment report, and an isolated
+Zstandard + dedupe payload probe. These experiments gather evidence; they are not a new compression
 format and are not wired into snapshot creation, chunk storage, or restore.
 
 No component in this layer rewrites source files or stored chunks. Existing
@@ -60,6 +60,15 @@ binary data. The generator refuses to overwrite a non-empty target directory.
 The corpus is synthetic; its proportions are useful for repeatable experiments,
 not a claim that it represents every user's files. Keep the corpus directory
 separate from real backup sources and remove it when finished.
+
+To compare each file's sampled classification with estimated payload behavior in
+one JSON document, run:
+
+    python -m tools.content_experiment ./tmp/content-corpus/*
+
+The combined report includes classification, recommendation, estimated storage
+mode, object counts, and aggregate estimated payload savings. It is still an
+isolated estimate, not a measured backup repository result.
 
 ## Compression + dedupe payload probe
 

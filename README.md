@@ -254,11 +254,13 @@ python -m tools.content_corpus ./tmp/content-corpus
 python -m tools.content_report --format json ./tmp/content-corpus/*
 python -m tools.content_report --format csv ./tmp/content-corpus/*
 python -m tools.content_compression_probe ./tmp/content-corpus/*
+python -m tools.content_experiment ./tmp/content-corpus/*
 ```
 
-The compression probe requires the Python `zstandard` package and estimates
-compressed payload size after SHA-256 object deduplication. It excludes store
-metadata and must be checked against the real backup/restore benchmark. Details:
+The compression probe and combined experiment require the Python `zstandard`
+package. They estimate compressed payload size after SHA-256 object deduplication;
+the combined report places those estimates beside content-profile hints. Both
+exclude store metadata and must be checked against the real backup/restore benchmark. Details:
 [`docs/CONTENT_INTELLIGENCE.md`](docs/CONTENT_INTELLIGENCE.md).
 
 ## Btrfs instant snapshots & replication

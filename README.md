@@ -19,7 +19,8 @@ storage, snapshot, or restore code.
 ```
 core/
   pathresolver.py   portable logical paths (%APPDATA%, $HOME, ...)
-  content_analyzer.py read-only content profiling; signature/text/entropy hints (phase 1)\n  chunker.py         fixed-size chunking + SHA-256 (simple/legacy path)
+  content_analyzer.py read-only content profiling; signature/text/entropy hints (phase 1)
+  chunker.py         fixed-size chunking + SHA-256 (simple/legacy path)
   storage.py          classic per-file chunk store (storage/ab/cd/<hash>) -- kept for compatibility
   packed_store.py    high-performance engine: chunks.dat + SQLite index, LRU cache, sequential I/O
   store_factory.py   opens the right engine for a store root (fixed per-root via engine.json)

@@ -21,6 +21,16 @@ class ContentAnalyzerTests(unittest.TestCase):
     def test_jsonl_content(self):
         self.assertEqual(analyze_bytes(b'{"n":1}\n{"n":2}\n{"n":3}\n').format_hint, "jsonl")
 
+    def test_utf32_bom_is_not_misread_as_utf16(self):
+        for encoding in ("utf-32-le", "utf-32-be"):
+            with self.subTest(encoding=encoding):
+                data = "hello UTF-32 text".encode(encoding)
+                bom = b"\xff\xfe\x00\x00" if encoding == "utf-32-le" else b"\x00\x00\xfe\xff"
+                profile = analyze_bytes(bom + data)
+                self.assertTrue(profile.text_like)
+                self.assertEqual(profile.encoding, "utf-32")
+                self.assertEqual(profile.format_hint, "text")
+
     def test_unknown_binary(self):
         profile = analyze_bytes(bytes([0, 255, 1, 254, 2, 253, 3, 252]) * 100)
         self.assertEqual(profile.format_hint, "unknown-binary")

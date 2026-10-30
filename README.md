@@ -19,6 +19,7 @@ storage, snapshot, or restore code.
 ```
 core/
   pathresolver.py   portable logical paths (%APPDATA%, $HOME, ...)
+  content_analyzer.py read-only content profiling; signature/text/entropy hints (phase 1)
   chunker.py         fixed-size chunking + SHA-256 (simple/legacy path)
   storage.py          classic per-file chunk store (storage/ab/cd/<hash>) -- kept for compatibility
   packed_store.py    high-performance engine: chunks.dat + SQLite index, LRU cache, sequential I/O
@@ -69,6 +70,13 @@ cli.py                   command-line interface
   a destination file — it either finishes completely or doesn't exist.
   Every completed file is durably logged, so an interrupted restore resumes
   from the last completed file instead of restarting from zero.
+
+### Content intelligence (phase 1, experimental)
+
+BackupSys includes a read-only, bounded-sample content profiler that identifies
+common file signatures and text-like content without trusting file extensions.
+It emits heuristic recommendations only; it does not transform stored bytes or
+change snapshot/restore behavior yet. See [docs/CONTENT_INTELLIGENCE.md](docs/CONTENT_INTELLIGENCE.md).
 
 ### Duplicate-source protection (optional)
 
@@ -235,6 +243,26 @@ reads, prefetch, streaming whole-file objects), smart chunking end-to-end
 (whole-file vs. chunked threshold behavior, storage_mode overrides,
 parallel vs. sequential hash/compress producing identical results), and
 the benchmark tool.
+
+## Experimental Content Intelligence
+
+The `feature/content-intelligence-v1` branch includes a read-only content
+profiler and two explicit-path reporting tools. They are experimental and do
+not change snapshot creation, stored bytes, or restore behavior.
+
+```bash
+python -m tools.content_corpus ./tmp/content-corpus
+python -m tools.content_report --format json ./tmp/content-corpus/*
+python -m tools.content_report --format csv ./tmp/content-corpus/*
+python -m tools.content_compression_probe ./tmp/content-corpus/*
+python -m tools.content_experiment ./tmp/content-corpus/*
+```
+
+The compression probe and combined experiment require the Python `zstandard`
+package. They estimate compressed payload size after SHA-256 object deduplication;
+the combined report places those estimates beside content-profile hints. Both
+exclude store metadata and must be checked against the real backup/restore benchmark. Details:
+[`docs/CONTENT_INTELLIGENCE.md`](docs/CONTENT_INTELLIGENCE.md).
 
 ## Btrfs instant snapshots & replication
 

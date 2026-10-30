@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Optional
 
 from core.progress import format_bytes, format_speed
-from core.restore import RestoreEngine
+from core.restore import RestoreEngine, _sanitize_logical_path
 from core.snapshot import SnapshotBuilder
 from core.store_factory import open_store
 from plans.manager import PlanManager
@@ -198,7 +198,9 @@ def _sha256_file(path: Path) -> str:
 def verify_restored_dataset(source_root: Path, restored_root: Path) -> None:
     """Raise if a benchmark restore differs from the generated source tree."""
     source_files = {
-        path.relative_to(source_root).as_posix(): path
+        _sanitize_logical_path(
+            f"{source_root}/{path.relative_to(source_root).as_posix()}"
+        ).as_posix(): path
         for path in source_root.rglob("*")
         if path.is_file()
     }

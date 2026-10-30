@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.benchmark import run_benchmark, verify_restored_dataset
+from core.restore import _sanitize_logical_path
 
 
 class TestBenchmark(unittest.TestCase):
@@ -22,9 +23,12 @@ class TestBenchmark(unittest.TestCase):
             source = root / "source"
             restored = root / "restored"
             (source / "nested").mkdir(parents=True)
-            (restored / "nested").mkdir(parents=True)
             (source / "nested" / "data.bin").write_bytes(b"same content")
-            (restored / "nested" / "data.bin").write_bytes(b"same content")
+            restored_path = restored / _sanitize_logical_path(
+                f"{source}/nested/data.bin"
+            )
+            restored_path.parent.mkdir(parents=True)
+            restored_path.write_bytes(b"same content")
 
             verify_restored_dataset(source, restored)
 
@@ -34,9 +38,11 @@ class TestBenchmark(unittest.TestCase):
             source = root / "source"
             restored = root / "restored"
             source.mkdir()
-            restored.mkdir()
+            source.mkdir()
             (source / "data.bin").write_bytes(b"original")
-            (restored / "data.bin").write_bytes(b"modified")
+            restored_path = restored / _sanitize_logical_path(f"{source}/data.bin")
+            restored_path.parent.mkdir(parents=True)
+            restored_path.write_bytes(b"modified")
 
             with self.assertRaisesRegex(RuntimeError, "integrity check failed"):
                 verify_restored_dataset(source, restored)

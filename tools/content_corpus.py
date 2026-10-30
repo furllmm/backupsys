@@ -62,7 +62,8 @@ def generate_corpus(target: str | Path, seed: int = 2026) -> list[Path]:
     payloads = {
         "events.log": log_data,
         "records.csv": csv_data,
-        "records.json": json_data,\n        "records.jsonl": jsonl_data,
+        "records.json": json_data,
+        "records.jsonl": jsonl_data,
         "source_fixture.py": source_data,
         "repeated.txt": repeated_data,
         "repeated-copy.txt": repeated_data,

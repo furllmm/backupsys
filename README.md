@@ -256,6 +256,8 @@ python -m tools.content_report --format json ./tmp/content-corpus/*
 python -m tools.content_report --format csv ./tmp/content-corpus/*
 python -m tools.content_compression_probe ./tmp/content-corpus/*
 python -m tools.content_experiment ./tmp/content-corpus/*
+python -m tools.content_store_benchmark ./tmp/content-corpus
+python -m tools.content_store_benchmark ./tmp/content-corpus --no-compression
 ```
 
 The compression probe and combined experiment require the Python `zstandard`

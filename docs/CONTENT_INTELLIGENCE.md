@@ -90,6 +90,25 @@ Validate any conclusion against the real
 sizes, and SHA-256 content against the generated source dataset before
 reporting benchmark metrics.
 
+## Real BackupSys content benchmark
+
+The isolated probe estimates compression and dedupe payloads. To measure the
+actual storage engine on the same mixed-content corpus, run a fresh real
+backup/restore cycle:
+
+    python -m tools.content_corpus ./tmp/content-corpus
+    python -m tools.content_store_benchmark ./tmp/content-corpus
+    python -m tools.content_store_benchmark ./tmp/content-corpus --no-compression
+    python -m tools.content_store_benchmark ./tmp/content-corpus --engine classic
+
+The source directory is only read. Each run creates a temporary, fresh
+repository and restore target, then verifies relative paths, sizes, and SHA-256
+hashes before emitting JSON. The report includes actual repository bytes,
+stored-object count, backup/restore duration and throughput, plus the profile
+classification distribution. Run the same settings several times; do not
+compare runs under materially different machine load. Temporary benchmark
+data is removed after the report is generated.
+
 ## Next evidence-driven phases
 
 1. Run unit tests and fix any environment or compatibility issues.

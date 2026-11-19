@@ -103,7 +103,7 @@ def run_content_store_benchmark(
                 "file_count": len(files),
                 "logical_bytes": logical_bytes,
                 "repository_bytes": physical_bytes,
-                "actual_payload_savings_bytes": max(0, logical_bytes - physical_bytes),
+                "net_bytes_saved": logical_bytes - physical_bytes,
                 "logical_to_repository_ratio": round(logical_bytes / physical_bytes, 4) if physical_bytes else None,
                 "stored_objects": object_count,
                 "backup_seconds": round(backup_seconds, 6),

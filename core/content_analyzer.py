@@ -6,6 +6,8 @@ import csv
 import io
 import json
 import math
+import os
+import stat as stat_module
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -187,9 +189,12 @@ def analyze_file(path: str | Path, sample_size: int = DEFAULT_SAMPLE_SIZE) -> Co
     if sample_size <= 0:
         raise ValueError("sample_size must be positive")
     file_path = Path(path)
-    stat = file_path.stat()
-    if not file_path.is_file():
-        raise ValueError("not a regular file: " + str(file_path))
     with file_path.open("rb") as stream:
+        file_stat = os.fstat(stream.fileno())
+        if not stat_module.S_ISREG(file_stat.st_mode):
+            raise ValueError("not a regular file: " + str(file_path))
         sample = stream.read(sample_size)
-    return analyze_bytes(sample, file_size=stat.st_size)
+        # The file may change while it is being sampled. Keep the reported
+        # size consistent with the bytes already read, even if it shrank.
+        final_size = os.fstat(stream.fileno()).st_size
+    return analyze_bytes(sample, file_size=max(final_size, len(sample)))

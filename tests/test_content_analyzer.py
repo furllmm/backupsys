@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from core.content_analyzer import analyze_bytes, analyze_file
@@ -55,6 +56,22 @@ class ContentAnalyzerTests(unittest.TestCase):
             self.assertEqual(profile.sample_bytes, 32)
             self.assertEqual(profile.file_size, path.stat().st_size)
             self.assertEqual(profile.format_hint, "json")
+
+    def test_file_analysis_uses_open_file_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sample.txt"
+            path.write_bytes(b"hello" * 100)
+            # Profiling should use fstat() on the opened descriptor, not a
+            # separate path stat that can become stale before the read.
+            with mock.patch.object(Path, "stat", side_effect=AssertionError("stale path stat")):
+                profile = analyze_file(path, sample_size=16)
+            self.assertEqual(profile.sample_bytes, 16)
+            self.assertEqual(profile.file_size, 500)
+
+    def test_directory_is_rejected_as_non_regular_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(ValueError):
+                analyze_file(Path(directory))
 
     def test_sample_size_must_be_positive(self):
         with tempfile.TemporaryDirectory() as directory:

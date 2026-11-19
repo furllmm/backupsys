@@ -79,13 +79,17 @@ def run_content_store_benchmark(
 
         verify_restored_dataset(source, restored_root)
 
-        if hasattr(store, "chunk_count"):
-            object_count = store.chunk_count()
-            physical_bytes = store.repository_size_bytes()
-        else:
-            hashes = list(store.all_chunk_hashes())
-            object_count = len(hashes)
-            physical_bytes = sum(store.chunk_size_on_disk(value) for value in hashes)
+        hashes = list(store.all_chunk_hashes())
+        object_count = len(hashes)
+        # Close/checkpoint the repository before measuring every regular file
+        # in its on-disk tree. This keeps packed and classic totals comparable.
+        if hasattr(store, "close"):
+            store.close()
+        physical_bytes = sum(
+            path.stat().st_size
+            for path in (workdir / "store").rglob("*")
+            if path.is_file()
+        )
 
         return {
             "schema_version": 1,

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from tools.content_corpus import generate_corpus
 from tools.content_store_benchmark import run_content_store_benchmark
+from tools.content_store_matrix import run_content_store_matrix
 
 
 class ContentStoreBenchmarkTests(unittest.TestCase):
@@ -46,6 +47,32 @@ class ContentStoreBenchmarkTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "symbolic links"):
                 run_content_store_benchmark(source)
+
+    def test_matrix_runs_comparable_verified_configurations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "corpus"
+            generate_corpus(source)
+            report = run_content_store_matrix(
+                str(source),
+                chunk_size=64 * 1024,
+                whole_file_threshold=32 * 1024,
+                sample_size=4096,
+            )
+
+        self.assertEqual(report["benchmark"], "real-backupsys-content-matrix")
+        self.assertEqual(len(report["results"]), 3)
+        self.assertEqual(report["dataset"]["file_count"], 9)
+        self.assertEqual(
+            [item["configuration"]["engine"] for item in report["results"]],
+            ["packed", "packed", "classic"],
+        )
+        self.assertTrue(all(item["integrity"]["verified"] for item in report["results"]))
+        self.assertTrue(all(
+            item["summary"]["logical_bytes"] == report["dataset"]["logical_bytes"]
+            for item in report["results"]
+        ))
+        self.assertFalse(report["results"][1]["compression_enabled"])
+        self.assertFalse(report["results"][2]["compression_enabled"])
 
     def test_classic_engine_backup_restore_benchmark(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -62,7 +62,7 @@ def run_content_store_matrix(
     return {
         "schema_version": 1,
         "benchmark": "real-backupsys-content-matrix",
-        "source": results[0]["configuration"] and report["source"],
+        "source": report["source"],
         "dataset": {
             "file_count": expected_file_count,
             "logical_bytes": expected_logical_bytes,

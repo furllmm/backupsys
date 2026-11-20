@@ -37,7 +37,16 @@ def run_content_store_benchmark(
     source = Path(source_root).expanduser().resolve()
     if not source.is_dir():
         raise ValueError(f"source must be an existing directory: {source}")
-    files = sorted(path for path in source.rglob("*") if path.is_file())
+    entries = sorted(source.rglob("*"))
+    symlinks = [path for path in entries if path.is_symlink()]
+    if symlinks:
+        examples = ", ".join(str(path.relative_to(source)) for path in symlinks[:5])
+        suffix = " ..." if len(symlinks) > 5 else ""
+        raise ValueError(
+            "source directory contains symbolic links; benchmark only regular files "
+            f"to keep backup/restore measurements comparable: {examples}{suffix}"
+        )
+    files = [path for path in entries if path.is_file()]
     if not files:
         raise ValueError(f"source directory contains no files: {source}")
     if chunk_size <= 0 or whole_file_threshold < 0 or sample_size <= 0:

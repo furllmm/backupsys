@@ -101,13 +101,28 @@ backup/restore cycle:
     python -m tools.content_store_benchmark ./tmp/content-corpus --no-compression
     python -m tools.content_store_benchmark ./tmp/content-corpus --engine classic
 
-The source directory is only read. Each run creates a temporary, fresh
-repository and restore target, then verifies relative paths, sizes, and SHA-256
-hashes before emitting JSON. The report includes actual repository bytes,
-stored-object count, backup/restore duration and throughput, plus the profile
-classification distribution. Run the same settings several times; do not
-compare runs under materially different machine load. Temporary benchmark
-data is removed after the report is generated.
+For a controlled three-run comparison (packed with compression requested,
+packed without compression, and classic without compression), use:
+
+    python -m tools.content_store_matrix ./tmp/content-corpus
+
+The source directory is only read. Each configuration creates a temporary,
+fresh repository and restore target, then verifies relative paths, sizes, and
+SHA-256 hashes before emitting JSON. The matrix checks that file count and
+logical byte count stay constant across runs. It reports actual repository
+bytes, stored-object count, backup/restore duration and throughput, plus the
+profile classification distribution. Classic is intentionally measured without
+compression because it does not expose the packed engine's compression switch.
+If the optional compression dependency is unavailable, the packed run may also
+report compression as disabled; inspect each result's `compression_enabled`
+field rather than assuming it was active. Run the matrix several times and use
+representative real datasets before drawing performance conclusions. The
+synthetic corpus is a repeatable smoke test, not a reliable performance workload.
+Temporary benchmark data is removed after each run.
+
+The benchmark rejects symbolic links in the source tree: BackupSys represents
+links differently from regular file contents, so silently counting them as
+ordinary files would make this comparison misleading.
 
 ## Next evidence-driven phases
 

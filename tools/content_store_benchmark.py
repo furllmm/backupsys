@@ -69,13 +69,19 @@ def run_content_store_benchmark(
         started = time.perf_counter()
         snapshot = builder.build(plan.id, "file", plan.sources)
         backup_seconds = time.perf_counter() - started
+        # SnapshotBuilder records internal failures in the returned snapshot
+        # instead of raising. Never benchmark a partial backup as a success.
+        if snapshot.partial or snapshot.errors:
+            details = "; ".join(snapshot.errors[:5]) or "snapshot marked partial"
+            raise RuntimeError(f"backup produced an incomplete snapshot: {details}")
 
         restored_root = workdir / "restored"
         started = time.perf_counter()
         result = RestoreEngine(store).restore(snapshot, restored_root)
         restore_seconds = time.perf_counter() - started
-        if result.failed:
-            raise RuntimeError(f"restore reported failures: {result.failed[:5]}")
+        if result.cancelled or result.failed:
+            details = result.failed[:5] or ["restore was cancelled"]
+            raise RuntimeError(f"restore did not complete successfully: {details}")
 
         verify_restored_dataset(source, restored_root)
 
@@ -85,6 +91,7 @@ def run_content_store_benchmark(
         # in its on-disk tree. This keeps packed and classic totals comparable.
         if hasattr(store, "close"):
             store.close()
+            store = None
         physical_bytes = sum(
             path.stat().st_size
             for path in (workdir / "store").rglob("*")

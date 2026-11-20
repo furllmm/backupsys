@@ -30,5 +30,25 @@ class ContentStoreBenchmarkTests(unittest.TestCase):
         self.assertIn("text", report["profile_distribution"]["kinds"])
 
 
+    def test_classic_engine_backup_restore_benchmark(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "corpus"
+            generate_corpus(source)
+            report = run_content_store_benchmark(
+                source,
+                engine="classic",
+                compression=False,
+                chunk_size=64 * 1024,
+                whole_file_threshold=32 * 1024,
+                sample_size=4096,
+            )
+
+        self.assertEqual(report["engine"], "classic")
+        self.assertTrue(report["integrity"]["verified"])
+        self.assertGreater(report["summary"]["repository_bytes"], 0)
+        self.assertGreater(report["summary"]["stored_objects"], 0)
+
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -29,6 +30,22 @@ class ContentStoreBenchmarkTests(unittest.TestCase):
         self.assertGreater(report["summary"]["restore_seconds"], 0)
         self.assertIn("text", report["profile_distribution"]["kinds"])
 
+
+    def test_rejects_symbolic_links_in_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            target = root / "target.txt"
+            target.write_text("link target", encoding="utf-8")
+            link = source / "linked.txt"
+            try:
+                os.symlink(target, link)
+            except (OSError, NotImplementedError):
+                self.skipTest("symbolic links are unavailable on this platform")
+
+            with self.assertRaisesRegex(ValueError, "symbolic links"):
+                run_content_store_benchmark(source)
 
     def test_classic_engine_backup_restore_benchmark(self):
         with tempfile.TemporaryDirectory() as directory:
